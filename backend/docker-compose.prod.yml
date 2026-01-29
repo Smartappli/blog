@@ -1,0 +1,5 @@
+services:
+  wes-app-blog:
+    image: registry.wallesmart.be/wes-app-blog:latest
+    volumes:
+      - ./.env:/usr/src/service/.env

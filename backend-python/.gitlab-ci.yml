@@ -1,0 +1,82 @@
+variables:
+  BACKEND_PATH: backend-python
+  REGISTRY_TEST_IMAGE: "registry-test.wallesmart.be/wes-app-blog"
+  REGISTRY_PROD_IMAGE: "registry.wallesmart.be/wes-app-blog"
+  DOCKER_TLS_CERTDIR: ""
+
+image: python:3.13-slim-bookworm
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  before_script:
+    - cd ${BACKEND_PATH}
+    - apt-get update -qq && apt-get install -y -qq git build-essential curl
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install --upgrade pip
+    - pip config set global.extra-index-url https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.awenet.be/api/v4/projects/84/packages/pypi/simple
+  script:
+    - pip install --cache-dir .pip-cache -r requirements.txt
+  cache:
+    key:
+      files:
+        - ${BACKEND_PATH}/requirements.txt
+    paths:
+      - ${BACKEND_PATH}/.pip-cache/
+      - ${BACKEND_PATH}/venv/
+  artifacts:
+    expire_in: 1 hour
+    paths:
+      - ${BACKEND_PATH}/venv/
+      - ${BACKEND_PATH}/.pip-cache/
+
+deploy-staging:
+  stage: deploy
+  image: docker:latest
+  services:
+    - name: docker:dind
+      command: ["--tls=false"]
+  environment:
+    name: staging
+  before_script:
+    - echo "$REGISTRY_TEST_PASSWORD" | docker login --password-stdin -u "$REGISTRY_TEST_USER" "$REGISTRY_TEST_URL"
+  script:
+    - docker build --build-arg GITLAB_PYPI_TOKEN=${CI_JOB_TOKEN} -t ${REGISTRY_TEST_IMAGE}:latest -t ${REGISTRY_TEST_IMAGE}:${CI_COMMIT_SHORT_SHA} -f ${BACKEND_PATH}/docker/Dockerfile ${BACKEND_PATH}
+    - docker push ${REGISTRY_TEST_IMAGE}:latest
+    - docker push ${REGISTRY_TEST_IMAGE}:${CI_COMMIT_SHORT_SHA}
+  after_script:
+    - docker logout "$REGISTRY_TEST_URL"
+  dependencies:
+    - build
+  needs:
+    - build
+  rules:
+    - if: $CI_COMMIT_REF_NAME == 'develop' && $CI_PIPELINE_SOURCE != 'merge_request_event'
+
+deploy-prod:
+  stage: deploy
+  image: docker:latest
+  services:
+    - name: docker:dind
+      command: ["--tls=false"]
+  environment:
+    name: production
+  before_script:
+    - echo "$REGISTRY_PROD_PASSWORD" | docker login --password-stdin -u "$REGISTRY_PROD_USER" "$REGISTRY_PROD_URL"
+  script:
+    - docker build --build-arg GITLAB_PYPI_TOKEN=${CI_JOB_TOKEN} -t ${REGISTRY_PROD_IMAGE}:latest -t ${REGISTRY_PROD_IMAGE}:${CI_COMMIT_SHORT_SHA} -f ${BACKEND_PATH}/docker/Dockerfile ${BACKEND_PATH}
+    - docker push ${REGISTRY_PROD_IMAGE}:latest
+    - docker push ${REGISTRY_PROD_IMAGE}:${CI_COMMIT_SHORT_SHA}
+  after_script:
+    - docker logout "$REGISTRY_PROD_URL"
+  dependencies:
+    - build
+  needs:
+    - build
+  when: manual
+  rules:
+    - if: $CI_COMMIT_REF_NAME == 'main' && $CI_PIPELINE_SOURCE != 'merge_request_event'

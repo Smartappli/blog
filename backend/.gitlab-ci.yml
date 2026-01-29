@@ -1,0 +1,78 @@
+variables:
+  BACKEND_PATH: backend
+  REGISTRY_TEST_IMAGE: "registry-test.wallesmart.be/wes-app-blog"
+  REGISTRY_PROD_IMAGE: "registry.wallesmart.be/wes-app-blog"
+  DOCKER_TLS_CERTDIR: ""
+
+image: node:22-bookworm-slim
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  before_script:
+    - cd ${BACKEND_PATH}
+    - corepack enable
+    - corepack prepare pnpm@latest --activate
+    - |
+      cat > .npmrc <<EOF
+      @wallesmart:registry=https://gitlab.awenet.be/api/v4/projects/84/packages/npm/
+      //gitlab.awenet.be/api/v4/projects/84/packages/npm/:_authToken=${CI_JOB_TOKEN}
+      EOF
+  script:
+    - pnpm install
+  cache:
+    key:
+      files:
+        - ${BACKEND_PATH}/pnpm-lock.yaml
+    paths:
+      - ${BACKEND_PATH}/node_modules/
+  artifacts:
+    expire_in: 1 hour
+    paths:
+      - ${BACKEND_PATH}/node_modules/
+
+deploy-staging:
+  stage: deploy
+  image: docker:latest
+  services:
+    - name: docker:dind
+      command: ["--tls=false"]
+  environment:
+    name: staging
+  before_script:
+    - echo "$REGISTRY_TEST_PASSWORD" | docker login --password-stdin -u "$REGISTRY_TEST_USER" "$REGISTRY_TEST_URL"
+  script:
+    - docker build --build-arg NPM_TOKEN=${CI_JOB_TOKEN} -t ${REGISTRY_TEST_IMAGE}:latest -t ${REGISTRY_TEST_IMAGE}:${CI_COMMIT_SHORT_SHA} -f ${BACKEND_PATH}/docker/Dockerfile ${BACKEND_PATH}
+    - docker push ${REGISTRY_TEST_IMAGE}:latest
+    - docker push ${REGISTRY_TEST_IMAGE}:${CI_COMMIT_SHORT_SHA}
+  dependencies:
+    - build
+  needs:
+    - build
+  rules:
+    - if: $CI_COMMIT_REF_NAME == 'develop' && $CI_PIPELINE_SOURCE != 'merge_request_event'
+
+deploy-prod:
+  stage: deploy
+  image: docker:latest
+  services:
+    - name: docker:dind
+      command: ["--tls=false"]
+  environment:
+    name: production
+  before_script:
+    - echo "$REGISTRY_PROD_PASSWORD" | docker login --password-stdin -u "$REGISTRY_PROD_USER" "$REGISTRY_PROD_URL"
+  script:
+    - docker build --build-arg NPM_TOKEN=${CI_JOB_TOKEN} -t ${REGISTRY_PROD_IMAGE}:latest -t ${REGISTRY_PROD_IMAGE}:${CI_COMMIT_SHORT_SHA} -f ${BACKEND_PATH}/docker/Dockerfile ${BACKEND_PATH}
+    - docker push ${REGISTRY_PROD_IMAGE}:latest
+    - docker push ${REGISTRY_PROD_IMAGE}:${CI_COMMIT_SHORT_SHA}
+  dependencies:
+    - build
+  needs:
+    - build
+  when: manual
+  rules:
+    - if: $CI_COMMIT_REF_NAME == 'main' && $CI_PIPELINE_SOURCE != 'merge_request_event'

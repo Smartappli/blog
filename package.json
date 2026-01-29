@@ -1,0 +1,13 @@
+{
+  "name": "blog",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:backend": "cd backend && pnpm dev",
+    "dev:frontend": "cd frontend && pnpm dev",
+    "build:backend": "cd backend && echo 'No build needed'",
+    "build:frontend": "cd frontend && pnpm build",
+    "build:widgets": "cd widgets/task-summary && pnpm build",
+    "build": "pnpm build:frontend && pnpm build:widgets"
+  }
+}

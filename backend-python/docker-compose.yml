@@ -1,0 +1,14 @@
+services:
+  wes-app-blog:
+    container_name: "wes-app-blog"
+    environment:
+      - TZ=Europe/Brussels
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      - proxy
+    restart: always
+
+networks:
+  proxy:
+    external: true

@@ -1,0 +1,19 @@
+services:
+  wes-app-blog:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        GITLAB_PYPI_TOKEN: ${GITLAB_PYPI_TOKEN}
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./:/usr/src/service
+      - /usr/src/service/__pycache__
+      - /usr/src/service/.pytest_cache
+      - /usr/src/service/venv
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - PYTHONUNBUFFERED=1
+    command: python main.py

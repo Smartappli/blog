@@ -1,0 +1,127 @@
+variables:
+  WIDGET_PATH: wes-app-blog
+  WIDGET_SRC_PATH: widgets/blog
+  DEVELOPMENT_ENV_FILE: |
+    VITE_BACKEND_URL=https://portail-test.wallesmart.be/api/v1/use/apps/proxy/${WIDGET_PATH}
+    VITE_ENV=production
+  PRODUCTION_ENV_FILE: |
+    VITE_BACKEND_URL=https://portail.wallesmart.be/api/v1/use/apps/proxy/${WIDGET_PATH}
+    VITE_ENV=production
+
+image: 'node:22-bookworm-slim'
+
+stages:
+  - build
+  - test
+  - deploy
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "main"
+      variables:
+        ENV_CONTENT: ${PRODUCTION_ENV_FILE}
+    - if: $CI_COMMIT_REF_NAME == "develop"
+      variables:
+        ENV_CONTENT: ${DEVELOPMENT_ENV_FILE}
+    - when: always
+      variables:
+        ENV_CONTENT: ${DEVELOPMENT_ENV_FILE}
+
+build:
+  stage: build
+  before_script:
+    - cd ${WIDGET_SRC_PATH}
+    - corepack enable
+    - corepack prepare pnpm@latest-8 --activate
+    - pnpm config set store-dir .pnpm-store
+    - echo "${ENV_CONTENT}" > .env
+    - |
+      cat > .npmrc <<EOF
+      @wallesmart:registry=https://gitlab.awenet.be/api/v4/projects/84/packages/npm/
+      //gitlab.awenet.be/api/v4/projects/84/packages/npm/:_authToken=${CI_JOB_TOKEN}
+      EOF
+  script:
+    - pnpm install
+    - pnpm build
+  cache:
+    key:
+      files:
+        - ${WIDGET_SRC_PATH}/pnpm-lock.yaml
+    paths:
+      - ${WIDGET_SRC_PATH}/.pnpm-store
+  artifacts:
+    expire_in: 1 hour
+    paths:
+      - ${WIDGET_SRC_PATH}/dist
+      - ${WIDGET_SRC_PATH}/node_modules
+
+test:
+  stage: test
+  before_script:
+    - cd ${WIDGET_SRC_PATH}
+    - corepack enable
+    - corepack prepare pnpm@latest-8 --activate
+    - pnpm config set store-dir .pnpm-store
+  script:
+    # - pnpm lint
+    # - pnpm format
+    - pnpm type-check
+  dependencies:
+    - build
+  needs:
+    - build
+
+deploy-staging:
+  stage: deploy
+  image: docker:latest
+  services:
+    - name: docker:dind
+      command: ['--tls=false']
+  environment:
+    name: staging
+  before_script:
+    - apk update && apk add openssh-client rsync
+    - eval $(ssh-agent -s)
+    - chmod 400 "$TEST_SRV_SSH_PRIVATE_KEY"
+    - ssh-add "$TEST_SRV_SSH_PRIVATE_KEY"
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $TEST_SRV_HOST >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - rsync -rlgoDzvc -i ${WIDGET_SRC_PATH}/dist/ $TEST_SRV_USER@"$TEST_SRV_HOST":$TEST_SRV_WES_WIDGETS/$WIDGET_PATH/
+  dependencies:
+    - build
+  needs:
+    - build
+    - test
+  rules:
+    - if: $CI_COMMIT_REF_NAME == 'develop' && $CI_PIPELINE_SOURCE != 'merge_request_event'
+
+deploy-prod:
+  stage: deploy
+  image: docker:latest
+  services:
+    - name: docker:dind
+      command: ['--tls=false']
+  environment:
+    name: production
+  before_script:
+    - apk update && apk add openssh-client rsync
+    - eval $(ssh-agent -s)
+    - chmod 400 "$PROD_SRV_SSH_PRIVATE_KEY"
+    - ssh-add "$PROD_SRV_SSH_PRIVATE_KEY"
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $PROD_SRV_HOST >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - rsync -rlgoDzvc -i ${WIDGET_SRC_PATH}/dist/ $PROD_SRV_USER@"$PROD_SRV_HOST":$PROD_SRV_WES_WIDGETS/$WIDGET_PATH/
+  dependencies:
+    - build
+  needs:
+    - build
+    - test
+  when: manual
+  rules:
+    - if: $CI_COMMIT_REF_NAME == 'main' && $CI_PIPELINE_SOURCE != 'merge_request_event'

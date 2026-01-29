@@ -1,0 +1,10 @@
+services:
+  wes-app-blog:
+    image: guergeiro/pnpm:22-10
+    # ports:
+    #   - 5000:5000
+    volumes:
+      - ./:/usr/src/service
+      - /usr/src/app/node_modules
+    working_dir: /usr/src/service
+    command: pnpm dev
