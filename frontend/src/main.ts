@@ -11,10 +11,10 @@ import App from './App.vue';
 const plugin = createVuePlugin({
   metadata: {
     id: 'blog',
-    name: 'Blog',
-    version: '1.0.0',
+    name: 'Revue VuePress',
+    version: '2.0.0',
     author: 'Elevéo',
-    description: 'Manage farm tasks efficiently'
+    description: 'Bilingual editorial hub powered by VuePress'
   },
 
   rootComponent: App,
@@ -26,17 +26,22 @@ const plugin = createVuePlugin({
         {
           path: '/',
           component: () => import('./views/Home.vue'),
-          meta: { title: 'Home' }
+          meta: { title: 'Accueil' }
         },
         {
-          path: '/tasks',
-          component: () => import('./views/Tasks.vue'),
-          meta: { title: 'Tasks', requiresAuth: true }
+          path: '/editorial',
+          component: () => import('./views/Editorial.vue'),
+          meta: { title: 'Éditorial', requiresAuth: true }
         },
         {
-          path: '/profile',
-          component: () => import('./views/Profile.vue'),
-          meta: { title: 'Profile', requiresAuth: true }
+          path: '/archive',
+          component: () => import('./views/Archive.vue'),
+          meta: { title: 'Archives PDF', requiresAuth: true }
+        },
+        {
+          path: '/chatbot',
+          component: () => import('./views/Chatbot.vue'),
+          meta: { title: 'Chatbot', requiresAuth: true }
         }
       ]
     });
@@ -46,16 +51,16 @@ const plugin = createVuePlugin({
 
   lifecycle: {
     onMount: () => {
-      console.log('✅ Blog mounted');
+      console.log('✅ Revue VuePress mounted');
     },
     onUnmount: () => {
-      console.log('🧹 Blog unmounted');
+      console.log('🧹 Revue VuePress unmounted');
     },
     onActivate: () => {
-      console.log('👁️ Blog activated');
+      console.log('👁️ Revue VuePress activated');
     },
     onDeactivate: () => {
-      console.log('💤 Blog deactivated');
+      console.log('💤 Revue VuePress deactivated');
     },
     onConfigChange: (config: WalleSmartConfig) => {
       console.log('⚙️ Config changed:', config.theme);
@@ -63,8 +68,7 @@ const plugin = createVuePlugin({
   },
 
   setup: async (_app: VueApp, _context: PluginContext) => {
-    // Any custom setup logic
-    console.log('🔧 Setting up Task Management');
+    console.log('🔧 Setting up VuePress Blog');
   }
 });
 
@@ -84,16 +88,16 @@ async function initStandalone() {
       userId: 'dev-user',
       appId: 'blog',
       memberReferenceId: 'dev-member',
-      profileName: 'John Farmer',
-      profileRole: 'farmer',
-      appName: 'Blog',
+      profileName: 'Claire Rédactrice',
+      profileRole: 'éditeur',
+      appName: 'Revue VuePress',
       csrfToken: 'dev-token'
     });
   }
 
   sdk.setConfig({
     theme: 'light',
-    lang: 'en',
+    lang: 'fr',
     basePath: '/'
   });
 
@@ -103,7 +107,7 @@ async function initStandalone() {
   const pluginManager = sdk.getPluginManager();
   await pluginManager.register('blog', plugin, el);
 
-  console.log('✅ Blog running in standalone mode');
+  console.log('✅ Revue VuePress running in standalone mode');
 }
 
 if (
