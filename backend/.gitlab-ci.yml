@@ -4,7 +4,7 @@ variables:
   REGISTRY_PROD_IMAGE: "registry.wallesmart.be/wes-app-blog"
   DOCKER_TLS_CERTDIR: ""
 
-image: node:22-bookworm-slim
+image: node:25-bookworm-slim
 
 stages:
   - build
