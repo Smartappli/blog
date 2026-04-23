@@ -14,7 +14,7 @@
     "@wallesmart/sdk-vue": "^1.0.0",
     "pinia": "^3.0.4",
     "vue": "^3.5.22",
-    "vue-router": "^4.6.3"
+    "vue-router": "^5.0.0"
   },
   "devDependencies": {
     "@types/node": "^25.0.0",
