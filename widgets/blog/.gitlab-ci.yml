@@ -8,7 +8,7 @@ variables:
     VITE_BACKEND_URL=https://portail.wallesmart.be/api/v1/use/apps/proxy/${WIDGET_PATH}
     VITE_ENV=production
 
-image: 'node:25-bookworm-slim'
+image: 'node:26-bookworm-slim'
 
 stages:
   - build

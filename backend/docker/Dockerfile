@@ -5,7 +5,7 @@
 # Stage 1: Install dependencies
 # ------------------
 # Using latest Nodejs LTS image
-FROM node:25-bookworm-slim AS deps
+FROM node:26-bookworm-slim AS deps
 
 LABEL org.opencontainers.image.authors="Amine.Roukh@umons.ac.be"
 
@@ -30,7 +30,7 @@ RUN pnpm install --frozen-lockfile
 # ------------------
 # Stage 2: Build final image
 # ------------------
-FROM node:25-bookworm-slim AS runner
+FROM node:26-bookworm-slim AS runner
 
 # Create app directory
 WORKDIR /usr/src/service
@@ -52,7 +52,7 @@ RUN CI=true pnpm prune --prod
 # ------------------
 # Final image
 # ------------------
-FROM node:25-bookworm-slim AS web
+FROM node:26-bookworm-slim AS web
 
 # Optimizations for production environment
 ENV NODE_ENV=production
