@@ -84,7 +84,8 @@
     background: white;
     padding: 1.25rem 2rem;
     box-shadow: 0 12px 28px rgba(10, 25, 41, 0.08);
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
     align-items: center;
     gap: 2rem;
     position: sticky;
@@ -117,7 +118,8 @@
   .app-header nav {
     display: flex;
     gap: 0.75rem;
-    flex: 1;
+    justify-self: center;
+    justify-content: center;
   }
 
   .app-header nav a {
@@ -144,6 +146,7 @@
     display: flex;
     align-items: center;
     gap: 1.5rem;
+    justify-self: end;
   }
 
   .language-toggle {
@@ -208,12 +211,14 @@
 
   @media (max-width: 960px) {
     .app-header {
+      display: flex;
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
     }
 
     .app-header nav {
       flex-wrap: wrap;
+      justify-content: center;
     }
 
     .header-actions {
