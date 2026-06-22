@@ -157,7 +157,7 @@
         fr: 'Synthèse des indicateurs économiques et prix du lait.',
         de: 'Zusammenfassung von Wirtschaftsdaten und Milchpreisen.'
       },
-      tags: ['économie', 'prix', 'export'],
+      tags: ['économie', 'prix'],
       related: ['data-ferme'],
       featured: false
     }
