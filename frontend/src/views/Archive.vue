@@ -6,7 +6,6 @@
         <p>Accédez aux anciens numéros, indexés et consultables dans le chatbot.</p>
       </div>
       <div class="actions">
-        <input v-model="keyword" placeholder="Filtrer un numéro, un thème…" />
         <select v-model="selectedYear">
           <option value="all">Toutes les années</option>
           <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
@@ -65,9 +64,7 @@
   const config = useWalleSmartConfig();
   const { t } = useLocale();
 
-  const keyword = ref('');
   const selectedYear = ref('all');
-  const appliedKeyword = ref('');
   const appliedYear = ref('all');
   const isAdmin = computed(() => {
     const role = config.profileRole?.toLowerCase() || '';
@@ -101,18 +98,12 @@
   const years = computed(() => Array.from(new Set(issues.map((issue) => issue.year))));
 
   const searchArchives = () => {
-    appliedKeyword.value = keyword.value;
     appliedYear.value = selectedYear.value;
   };
 
   const filteredIssues = computed(() => {
-    const query = appliedKeyword.value.trim().toLowerCase();
     return issues.filter((issue) => {
-      const matchesYear = appliedYear.value === 'all' || issue.year === appliedYear.value;
-      const matchesQuery =
-        !query ||
-        `${issue.name} ${issue.summary} ${issue.tags.join(' ')}`.toLowerCase().includes(query);
-      return matchesYear && matchesQuery;
+      return appliedYear.value === 'all' || issue.year === appliedYear.value;
     });
   });
 </script>
@@ -136,12 +127,11 @@
 
   .actions {
     display: grid;
-    grid-template-columns: minmax(220px, 1fr) 180px auto auto;
+    grid-template-columns: 180px auto auto;
     gap: 1rem;
     align-items: center;
   }
 
-  .actions input,
   .actions select {
     width: 100%;
     padding: 0.75rem 1rem;
