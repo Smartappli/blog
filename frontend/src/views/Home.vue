@@ -26,10 +26,10 @@
     <section class="search" id="search">
       <div class="search-header">
         <h3>{{ t('searchTitle') }}</h3>
-        <p>VuePress + Algolia + Ollama : une recherche hybride rapide et contextuelle.</p>
       </div>
       <div class="search-controls">
         <input v-model="keyword" :placeholder="t('searchPlaceholder')" />
+        <button type="button">Rechercher</button>
         <select v-model="selectedCategory">
           <option value="all">{{ t('categoryAll') }}</option>
           <option v-for="category in categories" :key="category" :value="category">
@@ -77,14 +77,7 @@
         <ul>
           <li>Navigation FR/DE et blocs éditoriaux synchronisés.</li>
           <li>Liens croisés entre dossiers d’articles.</li>
-          <li>Indexation PDF + Markdown dans une seule base.</li>
         </ul>
-      </div>
-      <div class="insight">
-        <h3>Connexion au chatbot Ollama</h3>
-        <p>
-          Les articles et PDF sont vectorisés pour répondre aux questions des lecteurs en temps réel.
-        </p>
       </div>
     </section>
   </div>
@@ -311,7 +304,7 @@
 
   .search-controls {
     display: grid;
-    grid-template-columns: 1fr 220px;
+    grid-template-columns: minmax(0, 1fr) auto 220px;
     gap: 1rem;
   }
 
@@ -321,6 +314,16 @@
     border: 1px solid #e2e8f0;
     border-radius: 12px;
     font-size: 1rem;
+  }
+
+  .search-controls button {
+    border: none;
+    padding: 0.8rem 1.4rem;
+    border-radius: 12px;
+    background: #1d4ed8;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
   }
 
   .results {
