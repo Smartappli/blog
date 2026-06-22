@@ -7,6 +7,11 @@
       </div>
       <div class="actions">
         <input v-model="keyword" placeholder="Filtrer un numéro, un thème…" />
+        <select v-model="selectedYear">
+          <option value="all">Toutes les années</option>
+          <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
+        </select>
+        <button type="button" class="search-button" @click="searchArchives">Rechercher</button>
         <button v-if="isAdmin" class="primary">Importer un PDF</button>
       </div>
     </header>
@@ -61,6 +66,9 @@
   const { t } = useLocale();
 
   const keyword = ref('');
+  const selectedYear = ref('all');
+  const appliedKeyword = ref('');
+  const appliedYear = ref('all');
   const isAdmin = computed(() => {
     const role = config.profileRole?.toLowerCase() || '';
     return role === 'admin' || role === 'administrateur';
@@ -90,12 +98,22 @@
     }
   ];
 
+  const years = computed(() => Array.from(new Set(issues.map((issue) => issue.year))));
+
+  const searchArchives = () => {
+    appliedKeyword.value = keyword.value;
+    appliedYear.value = selectedYear.value;
+  };
+
   const filteredIssues = computed(() => {
-    const query = keyword.value.trim().toLowerCase();
-    if (!query) return issues;
-    return issues.filter((issue) =>
-      `${issue.name} ${issue.summary} ${issue.tags.join(' ')}`.toLowerCase().includes(query)
-    );
+    const query = appliedKeyword.value.trim().toLowerCase();
+    return issues.filter((issue) => {
+      const matchesYear = appliedYear.value === 'all' || issue.year === appliedYear.value;
+      const matchesQuery =
+        !query ||
+        `${issue.name} ${issue.summary} ${issue.tags.join(' ')}`.toLowerCase().includes(query);
+      return matchesYear && matchesQuery;
+    });
   });
 </script>
 
@@ -117,26 +135,30 @@
   }
 
   .actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) 180px auto auto;
     gap: 1rem;
-    flex-wrap: wrap;
+    align-items: center;
   }
 
-  .actions input {
-    flex: 1;
-    min-width: 220px;
+  .actions input,
+  .actions select {
+    width: 100%;
     padding: 0.75rem 1rem;
     border-radius: 12px;
     border: 1px solid #e2e8f0;
   }
 
-  .primary {
+  .primary,
+  .search-button {
     border: none;
     padding: 0.75rem 1.5rem;
-    border-radius: 999px;
+    border-radius: 12px;
     font-weight: 600;
     background: #1d4ed8;
     color: white;
+    white-space: nowrap;
+    cursor: pointer;
   }
 
   .archive-grid {
@@ -229,6 +251,10 @@
   }
 
   @media (max-width: 900px) {
+    .actions {
+      grid-template-columns: 1fr;
+    }
+
     .archive-card {
       flex-direction: column;
       align-items: flex-start;
