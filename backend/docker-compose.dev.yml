@@ -1,6 +1,6 @@
 services:
   wes-app-blog:
-    image: guergeiro/pnpm:24-10
+    image: guergeiro/pnpm:26-10
     # ports:
     #   - 5000:5000
     volumes:
