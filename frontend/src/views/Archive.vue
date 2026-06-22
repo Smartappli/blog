@@ -7,7 +7,7 @@
       </div>
       <div class="actions">
         <input v-model="keyword" placeholder="Filtrer un numéro, un thème…" />
-        <button class="primary">Importer un PDF</button>
+        <button v-if="isAdmin" class="primary">Importer un PDF</button>
       </div>
     </header>
 
@@ -28,7 +28,7 @@
       </article>
     </section>
 
-    <section class="insight">
+    <section v-if="isAdmin" class="insight">
       <h3>Indexation intelligente</h3>
       <p>
         Chaque PDF est découpé, vectorisé et relié aux articles VuePress correspondants pour
@@ -53,12 +53,18 @@
 </template>
 
 <script setup lang="ts">
+  import { useWalleSmartConfig } from '@wallesmart/sdk-vue';
   import { computed, ref } from 'vue';
   import { useLocale } from '../composables/useLocale';
 
+  const config = useWalleSmartConfig();
   const { t } = useLocale();
 
   const keyword = ref('');
+  const isAdmin = computed(() => {
+    const role = config.profileRole?.toLowerCase() || '';
+    return role === 'admin' || role === 'administrateur';
+  });
 
   const issues = [
     {
