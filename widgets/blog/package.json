@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@wallesmart/sdk-vue": "^1.0.0",
-    "pinia": "^3.0.4",
+    "pinia": "^4.0.0",
     "vue": "^3.5.22",
     "vue-router": "^4.6.3"
   },
